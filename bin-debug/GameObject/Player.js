@@ -50,6 +50,8 @@ var Player = (function (_super) {
     Player.prototype.jump = function () {
         console.log('jump');
     };
+    Player.prototype.death = function () {
+    };
     // 行动中  
     Player.prototype.update = function (timeStamp) {
         this.y += this.acceleration;
@@ -57,6 +59,8 @@ var Player = (function (_super) {
         this.acceleration += GameData.gravity;
         if (this.y - this._role.height >= GameData.groundHeight) {
             console.log('游戏结束');
+            this.death();
+            SceneController.gameEnd();
         }
     };
     return Player;

@@ -43,6 +43,10 @@ class Player extends GameObject {
     console.log('jump')
   }
 
+  private death() {
+
+  }
+
   // 行动中  
   update(timeStamp: number) {
     this.y += this.acceleration
@@ -51,6 +55,8 @@ class Player extends GameObject {
 
     if (this.y - this._role.height >= GameData.groundHeight) {
       console.log('游戏结束')
+      this.death()
+      SceneController.gameEnd()
     }
   }
 }
