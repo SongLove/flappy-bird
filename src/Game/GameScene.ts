@@ -33,17 +33,20 @@ class GameScene extends egret.DisplayObjectContainer {
     this.addChild(bg)
 
     //初始化场景中每一层
-    this.UIContainer = new egret.DisplayObjectContainer();
-    this.rolerContainer = new egret.DisplayObjectContainer();
-    this.barrierContainer = new egret.DisplayObjectContainer();
-    this.mileageContainer = new egret.DisplayObjectContainer();
-    this.startGameContainer = new egret.DisplayObjectContainer();
+    this.UIContainer = new egret.DisplayObjectContainer()
+    this.rolerContainer = new egret.DisplayObjectContainer()
+    this.barrierContainer = new egret.DisplayObjectContainer()
+    this.mileageContainer = new egret.DisplayObjectContainer()
+    this.startGameContainer = new egret.DisplayObjectContainer()
 
-    this.addChild(this.barrierContainer);
-    this.addChild(this.mileageContainer);
-    this.addChild(this.rolerContainer);
-    this.addChild(this.UIContainer);
-    this.addChild(this.startGameContainer);
+    this.addChild(this.barrierContainer)
+    this.addChild(this.mileageContainer)
+    this.addChild(this.rolerContainer)
+    this.addChild(this.UIContainer)
+    this.addChild(this.startGameContainer)
+
+    this.gameObjectList = []
+    this.deleteObjectList = []
 
     // 初始化UI层
     this.initUIContainer()
@@ -175,10 +178,10 @@ class GameScene extends egret.DisplayObjectContainer {
 
   // 定时器
   public startTicker() {
-    egret.ticker.$startTick(this.update, this);
+    egret.ticker.$startTick(this.update, this)
   }
   public stopTicker() {
-    egret.ticker.$stopTick(this.update, this);
+    egret.ticker.$stopTick(this.update, this)
   }
 
   // 两个底部石板连接
@@ -195,7 +198,7 @@ class GameScene extends egret.DisplayObjectContainer {
     mileage2.x = mileage1.width
     this.mileageContainer.addChild(mileage2)
     this.mileage2 = mileage2
-    
+
     GameData.groundHeight = mileage1.y
   }
   // tick
@@ -212,12 +215,115 @@ class GameScene extends egret.DisplayObjectContainer {
     // 里程碑开始滚动
     this.mileage1.x -= GameData.speed
     this.mileage2.x -= GameData.speed
-    
+
     // 走过的距离
     GameData.distance += GameData.speed / 2
     // 
     GameData.player.update(timeStap)
 
+    for (let obj of this.gameObjectList) {
+      obj.update(timeStap)
+    }
+
+    // 创建障碍物
+    this.addElements()
+    // 检测碰撞
+    this.collision()
+
     return true
   }
+  private collision() {
+    let player: Player = GameData.player
+    // 碰撞检测
+    let player_rect = this.isRectangle(player)
+    for (let barrier of this.gameObjectList) {
+      if (barrier instanceof Barrier) {
+        let up_rect: egret.Rectangle = this.rectangle(barrier.x, 0, barrier.barrier_up.width, barrier.barrier_down.y - GameData.barrierWidth)
+        let down_rect: egret.Rectangle = this.rectangle(barrier.x, barrier.barrier_down.y, barrier.barrier_down.width, barrier.barrier_down.height)
+
+        // 真正碰撞
+        if (player_rect.intersects(up_rect) || player_rect.intersects(down_rect)) {
+          console.log('碰到了')
+          GameData.player.death()
+          GameData.isAlive = false
+          SceneController.gameEnd()
+        }
+
+        // 越过了 计分
+        if (barrier.x + barrier.barrier_up.width + player.width / 2 < player.x + player.width / 2 && !barrier.isScroce) {
+          barrier.isScroce = true
+          GameData.barrierCount++
+          this.changeBarriersCount(GameData.barrierCount)
+        }
+        if (barrier.x + barrier.barrier_up.width + 50 < 0) {
+          this.deleteObjectList.push()
+        }
+
+      }
+
+      if (barrier instanceof Egg) {
+        let egg_rect: egret.Rectangle = new egret.Rectangle(barrier.x, barrier.y, barrier.width, barrier.height)
+        console.log(barrier.x, barrier.y, barrier.width, barrier.height)
+        if (player_rect.intersects(egg_rect) && !barrier.hasTrigger) {
+          console.log('碰撞了蛋')
+          barrier.hasTrigger = true
+          GameData.eggCount++
+          this.changeEggCount(GameData.eggCount)
+          this.deleteObjectList.push(barrier)
+        }
+        if (barrier.x + barrier.width + 50 < 0) {
+          this.deleteObjectList.push(barrier)
+        }
+      }
+
+      for (let obj of this.deleteObjectList) {
+        this.barrierContainer.removeChild(<GameObject>obj)
+        this.gameObjectList.splice(this.gameObjectList.indexOf(<GameObject>obj), 1)
+      }
+      this.deleteObjectList.length = 0
+    }
+  }
+
+  private rectangle(x, y, w, h): egret.Rectangle {
+    return new egret.Rectangle(x, y, w, h)
+  }
+  private isRectangle(obj): egret.Rectangle {
+    return new egret.Rectangle(obj.x, obj.y, obj.width, obj.height)
+  }
+
+
+  private addElements() {
+    // 获取障碍物配置 永远是获取第一个，因为创建后会删除，所有第一个数据就是要下个要创建的数据
+    let element: ElementData = GameData.elements[0]
+    // 当你走过的距离达到障碍物坐标距离 将创建，通过第一轮，也就是走了5000米
+    //console.log(GameData.distance, element.distance, GameData.rounds, GameData.maxMileage)
+    if (element && GameData.distance >= element.distance + GameData.rounds * GameData.maxMileage) {
+      if (element.type === 'wall') {
+        let barrier = new Barrier(element)
+        barrier.x = this.stage.stageWidth
+        this.barrierContainer.addChild(barrier)
+        this.gameObjectList.push(barrier)
+      }
+      if (element.type === 'egg') {
+        let egg = new Egg(element)
+        // x 就是出现到页面的末端
+        egg.x = this.stage.stageWidth
+        egg.y = element.y
+        this.barrierContainer.addChild(egg)
+        this.gameObjectList.push(egg)
+      }
+      GameData.elements.splice(0, 1)
+      // 表示已走完了一轮
+      if (GameData.elements.length <= 0) {
+        GameData.elements = GameData.elements.concat(RES.getRes('config_json').elements)
+        GameData.rounds++
+      }
+    }
+  }
+}
+
+interface ElementData {
+  type: string,
+  distance: number,
+  y: number
 }

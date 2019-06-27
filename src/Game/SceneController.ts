@@ -46,10 +46,16 @@ class SceneController {
       stage.removeChild(this.instance.startScene)
       this.instance.startScene = new StartScene()
     }
+    if(this.instance.gameScene.parent) {
+      stage.removeChild(this.instance.gameScene)
+      this.instance.gameScene = new GameScene()
+    }
 
     // 初始化游戏配置
     GameData.barrierWidth = 0
     GameData.distance = 0
+    GameData.eggCount = 0
+    GameData.barrierCount = 0
     GameData.eggCount = 0
     GameData.isAlive = true
     // 读取配置文件
@@ -83,6 +89,9 @@ class SceneController {
    * 游戏结束
    */
   static gameEnd() {
-    
+    GameData.hasStart = false
+    this.instance.gameScene.stopTicker()
+    let stage = this.instance._stage
+    stage.addChild(this.instance.overScene)
   }
 }

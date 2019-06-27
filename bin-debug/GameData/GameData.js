@@ -6,6 +6,14 @@ var GameData = (function () {
     function GameData() {
     }
     /**
+     * 穿越的障碍数
+     */
+    GameData.barrierCount = 0;
+    /**
+     * 鸡蛋计数
+     */
+    GameData.eggCount = 0;
+    /**
      * 存放配置文件中读取的障碍物数据
      */
     GameData.elements = [];

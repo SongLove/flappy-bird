@@ -36,6 +36,8 @@ var GameScene = (function (_super) {
         this.addChild(this.rolerContainer);
         this.addChild(this.UIContainer);
         this.addChild(this.startGameContainer);
+        this.gameObjectList = [];
+        this.deleteObjectList = [];
         // 初始化UI层
         this.initUIContainer();
         // 创建初始化开始游戏层
@@ -186,7 +188,97 @@ var GameScene = (function (_super) {
         GameData.distance += GameData.speed / 2;
         // 
         GameData.player.update(timeStap);
+        for (var _i = 0, _a = this.gameObjectList; _i < _a.length; _i++) {
+            var obj = _a[_i];
+            obj.update(timeStap);
+        }
+        // 创建障碍物
+        this.addElements();
+        // 检测碰撞
+        this.collision();
         return true;
+    };
+    GameScene.prototype.collision = function () {
+        var player = GameData.player;
+        // 碰撞检测
+        var player_rect = this.isRectangle(player);
+        for (var _i = 0, _a = this.gameObjectList; _i < _a.length; _i++) {
+            var barrier = _a[_i];
+            if (barrier instanceof Barrier) {
+                var up_rect = this.rectangle(barrier.x, 0, barrier.barrier_up.width, barrier.barrier_down.y - GameData.barrierWidth);
+                var down_rect = this.rectangle(barrier.x, barrier.barrier_down.y, barrier.barrier_down.width, barrier.barrier_down.height);
+                // 真正碰撞
+                if (player_rect.intersects(up_rect) || player_rect.intersects(down_rect)) {
+                    console.log('碰到了');
+                    GameData.player.death();
+                    GameData.isAlive = false;
+                    SceneController.gameEnd();
+                }
+                // 越过了 计分
+                if (barrier.x + barrier.barrier_up.width + player.width / 2 < player.x + player.width / 2 && !barrier.isScroce) {
+                    barrier.isScroce = true;
+                    GameData.barrierCount++;
+                    this.changeBarriersCount(GameData.barrierCount);
+                }
+                if (barrier.x + barrier.barrier_up.width + 50 < 0) {
+                    this.deleteObjectList.push();
+                }
+            }
+            if (barrier instanceof Egg) {
+                var egg_rect = new egret.Rectangle(barrier.x, barrier.y, barrier.width, barrier.height);
+                console.log(barrier.x, barrier.y, barrier.width, barrier.height);
+                if (player_rect.intersects(egg_rect) && !barrier.hasTrigger) {
+                    console.log('碰撞了蛋');
+                    barrier.hasTrigger = true;
+                    GameData.eggCount++;
+                    this.changeEggCount(GameData.eggCount);
+                    this.deleteObjectList.push(barrier);
+                }
+                if (barrier.x + barrier.width + 50 < 0) {
+                    this.deleteObjectList.push(barrier);
+                }
+            }
+            for (var _b = 0, _c = this.deleteObjectList; _b < _c.length; _b++) {
+                var obj = _c[_b];
+                this.barrierContainer.removeChild(obj);
+                this.gameObjectList.splice(this.gameObjectList.indexOf(obj), 1);
+            }
+            this.deleteObjectList.length = 0;
+        }
+    };
+    GameScene.prototype.rectangle = function (x, y, w, h) {
+        return new egret.Rectangle(x, y, w, h);
+    };
+    GameScene.prototype.isRectangle = function (obj) {
+        return new egret.Rectangle(obj.x, obj.y, obj.width, obj.height);
+    };
+    GameScene.prototype.addElements = function () {
+        // 获取障碍物配置 永远是获取第一个，因为创建后会删除，所有第一个数据就是要下个要创建的数据
+        var element = GameData.elements[0];
+        // 当你走过的距离达到障碍物坐标距离 将创建，通过第一轮，也就是走了5000米
+        //console.log(GameData.distance, element.distance, GameData.rounds, GameData.maxMileage)
+        if (element && GameData.distance >= element.distance + GameData.rounds * GameData.maxMileage) {
+            if (element.type === 'wall') {
+                var barrier = new Barrier(element);
+                barrier.x = this.stage.stageWidth;
+                this.barrierContainer.addChild(barrier);
+                this.gameObjectList.push(barrier);
+            }
+            if (element.type === 'egg') {
+                var egg = new Egg(element);
+                // x 就是出现到页面的末端
+                egg.x = this.stage.stageWidth;
+                egg.y = element.y;
+                this.barrierContainer.addChild(egg);
+                this.gameObjectList.push(egg);
+            }
+            GameData.elements.splice(0, 1);
+            // 表示已走完了一轮
+            if (GameData.elements.length <= 0) {
+                GameData.elements = GameData.elements.concat(RES.getRes('config_json').elements);
+                GameData.rounds++;
+            }
+        }
     };
     return GameScene;
 }(egret.DisplayObjectContainer));

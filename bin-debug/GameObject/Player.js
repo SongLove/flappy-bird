@@ -48,19 +48,40 @@ var Player = (function (_super) {
     };
     // 跳跃
     Player.prototype.jump = function () {
-        console.log('jump');
+        var _this = this;
+        if (!GameData.isAlive)
+            return;
+        this.acceleration = -GameData.jumpSpeed;
+        this.jump_img.x = this._role.x - this._role.width / 2;
+        this.jump_img.y = this._role.x + this._role.height + 10;
+        this.jump_img.visible = true;
+        egret.setTimeout(function () {
+            _this.jump_img.visible = false;
+        }, this, 100);
     };
-    Player.prototype.death = function () {
+    Player.prototype.death = function (isLanding) {
+        var _this = this;
+        if (isLanding === void 0) { isLanding = false; }
+        GameData.isAlive = false;
+        if (!isLanding) {
+            this.death_img.x = this._role.x;
+            this.death_img.y = this._role.y - this.death_img.height;
+            this.death_img.visible = true;
+            egret.setTimeout(function () {
+                _this.death_img.visible = false;
+            }, this, 500);
+        }
     };
     // 行动中  
     Player.prototype.update = function (timeStamp) {
         this.y += this.acceleration;
         // 受重力加速的影响
         this.acceleration += GameData.gravity;
-        if (this.y - this._role.height >= GameData.groundHeight) {
+        if (this.y + this._role.height >= GameData.groundHeight) {
             console.log('游戏结束');
-            this.death();
+            this.death(true);
             SceneController.gameEnd();
+            this.y = GameData.groundHeight - this._role.height;
         }
     };
     return Player;

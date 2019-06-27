@@ -10,17 +10,19 @@
 	],
 	"game": [
 		"bin-debug/GameObject/GameObject.js",
-		"bin-debug/LoadingUI.js",
+		"bin-debug/Game/OverScene.js",
 		"bin-debug/Main.js",
 		"bin-debug/Platform.js",
 		"bin-debug/ThemeAdapter.js",
 		"bin-debug/Common/GameUtil.js",
-		"bin-debug/GameObject/Player.js",
-		"bin-debug/Game/OverScene.js",
+		"bin-debug/Game/GameScene.js",
+		"bin-debug/LoadingUI.js",
 		"bin-debug/Game/SceneController.js",
 		"bin-debug/Game/StartScene.js",
 		"bin-debug/GameData/GameData.js",
+		"bin-debug/GameObject/Barrier.js",
+		"bin-debug/GameObject/Egg.js",
 		"bin-debug/AssetAdapter.js",
-		"bin-debug/Game/GameScene.js"
+		"bin-debug/GameObject/Player.js"
 	]
 }

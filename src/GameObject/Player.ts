@@ -40,11 +40,26 @@ class Player extends GameObject {
   }
   // 跳跃
   public jump() {
-    console.log('jump')
+    if (!GameData.isAlive) return
+    this.acceleration = -GameData.jumpSpeed
+    this.jump_img.x = this._role.x - this._role.width / 2
+    this.jump_img.y = this._role.x + this._role.height + 10
+    this.jump_img.visible = true
+    egret.setTimeout(() => {
+      this.jump_img.visible = false
+    }, this, 100)
   }
 
-  private death() {
-
+  public death(isLanding: boolean = false) {
+    GameData.isAlive = false
+    if (!isLanding) {
+      this.death_img.x = this._role.x
+      this.death_img.y = this._role.y - this.death_img.height
+      this.death_img.visible = true
+      egret.setTimeout(() => {
+        this.death_img.visible = false
+      }, this, 500)
+    }
   }
 
   // 行动中  
@@ -53,10 +68,11 @@ class Player extends GameObject {
     // 受重力加速的影响
     this.acceleration += GameData.gravity
 
-    if (this.y - this._role.height >= GameData.groundHeight) {
+    if (this.y + this._role.height >= GameData.groundHeight) {
       console.log('游戏结束')
-      this.death()
+      this.death(true)
       SceneController.gameEnd()
+      this.y = GameData.groundHeight - this._role.height
     }
   }
 }

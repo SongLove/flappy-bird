@@ -26,12 +26,12 @@ class GameData {
   /**
    * 穿越的障碍数
    */
-  static barrierCount: number
+  static barrierCount: number = 0
 
   /**
    * 鸡蛋计数
    */
-  static eggCount: number
+  static eggCount: number = 0
 
   /**
    * 走过的距离 用于计算位置
